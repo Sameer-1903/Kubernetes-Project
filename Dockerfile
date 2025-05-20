@@ -1,4 +1,4 @@
-FROM centos:latest
+FROM ubuntu:20.04
 MAINTAINER sameerkanade2001@gmail.com
 RUN apt install -y httpd \
  zip\
