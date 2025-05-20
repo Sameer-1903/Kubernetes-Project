@@ -1,22 +1,25 @@
 FROM ubuntu:20.04
 MAINTAINER sameerkanade2001@gmail.com
-ENV DEBIAN_FRONTEND=noninteractive TZ=Asia/Kolkata
 
-# Install Apache, zip, unzip — add apt update first!
-RUN apt update && \
-    apt install -y apache2 zip unzip && \
-    apt clean
+# Avoid interactive prompts during build (like timezone config)
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Add the template ZIP file
-ADD https://www.free-css.com/assets/files/free-css-templates/download/page254/photogenic.zip /var/www/html/
+# Install Apache, wget, zip, unzip
+RUN apt-get update && \
+    apt-get install -y apache2 wget zip unzip && \
+    apt-get clean
 
-# Unzip and move content
+# Download the PhotoGallery template from Colorlib
+RUN wget -O /var/www/html/photogallery.zip https://colorlib.com/wp-content/uploads/sites/2/photogallery.zip
+
+# Extract and move website content
 WORKDIR /var/www/html/
-RUN unzip photogenic.zip && \
-    cp -rvf photogenic/* . && \
-    rm -rf photogenic photogenic.zip
+RUN unzip photogallery.zip && \
+    cp -rvf photogallery/* . && \
+    rm -rf photogallery photogallery.zip
 
-# Run Apache in foreground
-CMD ["apache2ctl", "-D", "FOREGROUND"]
+# Expose ports
+EXPOSE 80 22
 
-EXPOSE 80
+# Run Apache in the foreground
+CMD ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]
