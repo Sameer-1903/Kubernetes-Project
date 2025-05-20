@@ -1,25 +1,21 @@
 FROM ubuntu:20.04
 MAINTAINER sameerkanade2001@gmail.com
-
-# Avoid interactive prompts during build (like timezone config)
 ENV DEBIAN_FRONTEND=noninteractive
-
-# Install Apache, wget, zip, unzip
+# Install Apache and necessary tools
 RUN apt-get update && \
-    apt-get install -y apache2 wget zip unzip && \
+    apt-get install -y apache2 wget unzip && \
     apt-get clean
 
-# Download the PhotoGallery template from Colorlib
-RUN wget -O /var/www/html/photogallery.zip https://colorlib.com/wp-content/uploads/sites/2/photogallery.zip
+# Download and extract the Fonicy template
+RUN wget -O /tmp/fonicy.zip https://www.free-css.com/assets/files/free-css-templates/download/page293/fonicy.zip && \
+    unzip /tmp/fonicy.zip -d /var/www/html/ && \
+    rm /tmp/fonicy.zip
 
-# Extract and move website content
+# Set the working directory
 WORKDIR /var/www/html/
-RUN unzip photogallery.zip && \
-    cp -rvf photogallery/* . && \
-    rm -rf photogallery photogallery.zip
 
 # Expose ports
-EXPOSE 80 22
+EXPOSE 80
 
-# Run Apache in the foreground
+# Start Apache in the foreground
 CMD ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]
