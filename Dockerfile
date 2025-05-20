@@ -1,5 +1,6 @@
 FROM ubuntu:20.04
 MAINTAINER sameerkanade2001@gmail.com
+ENV DEBIAN_FRONTEND=noninteractive TZ=Asia/Kolkata
 
 # Install Apache, zip, unzip — add apt update first!
 RUN apt update && \
