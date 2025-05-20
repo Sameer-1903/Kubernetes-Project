@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
 MAINTAINER sameerkanade2001@gmail.com
-
+ENV DEBIAN_FRONTEND=noninteractive
 # Install Apache and necessary tools
 RUN apt-get update && \
     apt-get install -y apache2 wget unzip && \
