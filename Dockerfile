@@ -13,6 +13,6 @@ RUN wget -O /tmp/sample-template.zip https://github.com/BlackrockDigital/startbo
 
 WORKDIR /var/www/html/
 
-EXPOSE 80
+EXPOSE 80 
 
 CMD ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]
