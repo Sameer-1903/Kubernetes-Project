@@ -1,0 +1,20 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata: 
+    name: sameerskanade
+spec:
+    replicas: 2
+    selector: 
+      matchLabels:
+        app: sameerskanade
+      template:
+        metadata: 
+          labels:
+            app: sameerskanade
+        spec:
+          containers:
+          - name: sameerskanade
+            image: sameer1903/pipeline-demo
+            imagePullPolicy: Always
+            ports:
+            - containerPort: 80 
