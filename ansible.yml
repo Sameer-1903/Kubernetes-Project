@@ -1,12 +1,6 @@
 - hosts: all
   become: true
   tasks:
-<<<<<<< HEAD
-    - name: create new deployment
-      command: kubectl apply -f /home/ubuntu/Deployment.yml
-    - name: create new service
-      command: kubectl apply -f /home/ubuntu/Service.yml
-=======
     - name: Copy deployment file to control node (optional if already there)
       copy:
         src: ./deployment.yml
@@ -26,4 +20,3 @@
     - name: Apply Kubernetes service from control node
       command: kubectl apply -f /home/ubuntu/Service.yml
       delegate_to: 127.0.0.1
->>>>>>> 6a34ae5 (Files added changes in ansible.yml)
