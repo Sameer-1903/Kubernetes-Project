@@ -1,22 +1,8 @@
 - hosts: all
   become: true
   tasks:
-    - name: Copy deployment file to control node (optional if already there)
-      copy:
-        src: ./Deployment.yml
-        dest: /home/ubuntu/Deployment.yml
-      delegate_to: 127.0.0.1
+    - name: Apply Kubernetes deployment from target node
+      command: kubectl apply -f /home/ubuntu/Deployment.yml
 
-    - name: Copy service file to control node (optional if already there)
-      copy:
-        src: ./Service.yml
-        dest: /home/ubuntu/Service.yml
-      delegate_to: 127.0.0.1
-
-    - name: Apply Kubernetes deployment from control node
-      command: /usr/bin/kubectl apply -f /home/ubuntu/Deployment.yml
-      delegate_to: 127.0.0.1
-
-    - name: Apply Kubernetes service from control node
-      command: /usr/bin/kubectl apply -f /home/ubuntu/Service.yml
-      delegate_to: 127.0.0.1
+    - name: Apply Kubernetes service from target node
+      command: kubectl apply -f /home/ubuntu/Service.yml
