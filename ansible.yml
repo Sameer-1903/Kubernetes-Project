@@ -3,7 +3,7 @@
   tasks:
     - name: Copy deployment file to control node (optional if already there)
       copy:
-        src: ./deployment.yml
+        src: ./Deployment.yml
         dest: /home/ubuntu/deployment.yml
       delegate_to: 127.0.0.1
 
@@ -14,7 +14,7 @@
       delegate_to: 127.0.0.1
 
     - name: Apply Kubernetes deployment from control node
-      command: kubectl apply -f /home/ubuntu/deployment.yml
+      command: kubectl apply -f /home/ubuntu/Deployment.yml
       delegate_to: 127.0.0.1
 
     - name: Apply Kubernetes service from control node
