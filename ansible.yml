@@ -1,12 +1,30 @@
 - hosts: all
   become: true
   tasks:
+    - name: Ensure .aws/credentials file exists
+      stat:
+        path: /home/ubuntu/.aws/credentials
+      register: aws_creds
+
+    - name: Fail if AWS credentials are missing
+      fail:
+        msg: "AWS credentials file not found at /home/ubuntu/.aws/credentials"
+      when: not aws_creds.stat.exists
+
+    - name: Debug - Show AWS credentials content (optional)
+      shell: cat /home/ubuntu/.aws/credentials
+      register: awscreds
+    - debug:
+        var: awscreds.stdout_lines
+
     - name: Apply Kubernetes deployment from target node
       environment:
         KUBECONFIG: /home/ubuntu/.kube/config
+        AWS_SHARED_CREDENTIALS_FILE: /home/ubuntu/.aws/credentials
       command: kubectl apply -f /home/ubuntu/Deployment.yml
 
     - name: Apply Kubernetes service from target node
       environment:
         KUBECONFIG: /home/ubuntu/.kube/config
+        AWS_SHARED_CREDENTIALS_FILE: /home/ubuntu/.aws/credentials
       command: kubectl apply -f /home/ubuntu/Service.yml
