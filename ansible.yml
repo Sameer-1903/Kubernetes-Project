@@ -2,9 +2,14 @@
   become: true
   tasks:
 
-    - name: delete old deployment
+    - name: Delete old deployment
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
       command: kubectl delete -f /home/ubuntu/Deployment.yml
-    - name: delete old service
+
+    - name: Delete old service
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
       command: kubectl delete -f /home/ubuntu/Service.yml
 
     - name: Ensure .aws/credentials file exists
@@ -20,6 +25,7 @@
     - name: Debug - Show AWS credentials content (optional)
       shell: cat /home/ubuntu/.aws/credentials
       register: awscreds
+
     - debug:
         var: awscreds.stdout_lines
 
