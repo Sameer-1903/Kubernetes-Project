@@ -1,6 +1,12 @@
 - hosts: all
   become: true
   tasks:
+
+    - name: delete old deployment
+      command: kubectl delete f /home/ubuntu/Deployment.yml
+    - name: delete old service
+      command: Kubectl delete -f /home/ubuntu/Service.yml
+
     - name: Ensure .aws/credentials file exists
       stat:
         path: /home/ubuntu/.aws/credentials
