@@ -1,57 +1,44 @@
+---
 - hosts: all
-  become: true
+  become: false
   vars:
-    aws_region: "ap-south-1"
-    kubeconfig_path: "/home/ubuntu/.kube/config"
-
+    kubeconfig_path: /home/ubuntu/.kube/config
+    aws_region: ap-south-1
   tasks:
-    - name: Read AWS credentials file from remote host
-      slurp:
-        src: /home/ubuntu/.aws/credentials
-      register: aws_creds_file
+    - name: Check AWS identity on remote
+      shell: aws sts get-caller-identity
+      register: aws_identity
+    - debug:
+        msg: "AWS identity: {{ aws_identity.stdout }}"
 
-    - name: Decode AWS credentials content
-      set_fact:
-        aws_creds_content: "{{ aws_creds_file.content | b64decode }}"
-
-    - name: Parse AWS access key id
-      set_fact:
-        aws_access_key_id: "{{ (aws_creds_content | regex_search('aws_access_key_id\\s*=\\s*(.+)', '\\1')) | trim }}"
-
-    - name: Parse AWS secret access key
-      set_fact:
-        aws_secret_access_key: "{{ (aws_creds_content | regex_search('aws_secret_access_key\\s*=\\s*(.+)', '\\1')) | trim }}"
+    - name: Get EKS token via AWS CLI
+      shell: aws eks get-token --cluster-name sameer-cluster --region {{ aws_region }}
+      register: eks_token
+    - debug:
+        msg: "EKS token JSON: {{ eks_token.stdout }}"
 
     - name: Delete old deployment (ignore errors if not present)
-      command: kubectl delete -f /home/ubuntu/Deployment.yml
+      shell: kubectl delete -f /home/ubuntu/Deployment.yml
       environment:
         KUBECONFIG: "{{ kubeconfig_path }}"
-        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
-        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
-        AWS_DEFAULT_REGION: "{{ aws_region }}"
+        AWS_REGION: "{{ aws_region }}"
       ignore_errors: yes
 
     - name: Delete old service (ignore errors if not present)
-      command: kubectl delete -f /home/ubuntu/Service.yml
+      shell: kubectl delete -f /home/ubuntu/Service.yml
       environment:
         KUBECONFIG: "{{ kubeconfig_path }}"
-        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
-        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
-        AWS_DEFAULT_REGION: "{{ aws_region }}"
+        AWS_REGION: "{{ aws_region }}"
       ignore_errors: yes
 
-    - name: Apply Kubernetes deployment from target node
-      command: kubectl apply -f /home/ubuntu/Deployment.yml
+    - name: Apply Kubernetes deployment
+      shell: kubectl apply -f /home/ubuntu/Deployment.yml
       environment:
         KUBECONFIG: "{{ kubeconfig_path }}"
-        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
-        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
-        AWS_DEFAULT_REGION: "{{ aws_region }}"
+        AWS_REGION: "{{ aws_region }}"
 
-    - name: Apply Kubernetes service from target node
-      command: kubectl apply -f /home/ubuntu/Service.yml
+    - name: Apply Kubernetes service
+      shell: kubectl apply -f /home/ubuntu/Service.yml
       environment:
         KUBECONFIG: "{{ kubeconfig_path }}"
-        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
-        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
-        AWS_DEFAULT_REGION: "{{ aws_region }}"
+        AWS_REGION: "{{ aws_region }}"
