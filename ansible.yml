@@ -1,69 +1,41 @@
 - hosts: all
   become: true
   vars:
-    aws_access_key_id: "{{ lookup('file', '/home/ubuntu/.aws/credentials') | regex_search('aws_access_key_id\s*=\s*(.*)', '\\1') }}"
-    aws_secret_access_key: "{{ lookup('file', '/home/ubuntu/.aws/credentials') | regex_search('aws_secret_access_key\s*=\s*(.*)', '\\1') }}"
-    aws_region: ap-south-1   # change to your region if needed
+    aws_region: "ap-south-1"
+    aws_access_key_id: "{{ lookup('ini', 'default.aws_access_key_id file=/home/ubuntu/.aws/credentials') }}"
+    aws_secret_access_key: "{{ lookup('ini', 'default.aws_secret_access_key file=/home/ubuntu/.aws/credentials') }}"
 
   tasks:
-
     - name: Delete old deployment
-      environment:
-        KUBECONFIG: /home/ubuntu/.kube/config
       command: kubectl delete -f /home/ubuntu/Deployment.yml
-
-    - name: Delete old service
-      environment:
-        KUBECONFIG: /home/ubuntu/.kube/config
-      command: kubectl delete -f /home/ubuntu/Service.yml
-
-    - name: Ensure .aws/credentials file exists
-      stat:
-        path: /home/ubuntu/.aws/credentials
-      register: aws_creds
-
-    - name: Fail if AWS credentials are missing
-      fail:
-        msg: "AWS credentials file not found at /home/ubuntu/.aws/credentials"
-      when: not aws_creds.stat.exists
-
-    - name: Debug - Show AWS credentials content (optional)
-      shell: cat /home/ubuntu/.aws/credentials
-      register: awscreds
-
-    - debug:
-        var: awscreds.stdout_lines
-
-    - name: Delete old deployment
       environment:
         KUBECONFIG: /home/ubuntu/.kube/config
         AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
         AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
         AWS_DEFAULT_REGION: "{{ aws_region }}"
-      command: kubectl delete -f /home/ubuntu/Deployment.yml
       ignore_errors: yes
 
     - name: Delete old service
+      command: kubectl delete -f /home/ubuntu/Service.yml
       environment:
         KUBECONFIG: /home/ubuntu/.kube/config
         AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
         AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
         AWS_DEFAULT_REGION: "{{ aws_region }}"
-      command: kubectl delete -f /home/ubuntu/Service.yml
       ignore_errors: yes
 
-    - name: Apply Kubernetes deployment from target node
-      environment:
-        KUBECONFIG: /home/ubuntu/.kube/config
-        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
-        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
-        AWS_DEFAULT_REGION: "{{ aws_region }}"
+    - name: Apply deployment
       command: kubectl apply -f /home/ubuntu/Deployment.yml
-
-    - name: Apply Kubernetes service from target node
       environment:
         KUBECONFIG: /home/ubuntu/.kube/config
         AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
         AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
         AWS_DEFAULT_REGION: "{{ aws_region }}"
+
+    - name: Apply service
       command: kubectl apply -f /home/ubuntu/Service.yml
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
