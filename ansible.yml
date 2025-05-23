@@ -1,5 +1,10 @@
 - hosts: all
   become: true
+  vars:
+    aws_access_key_id: "{{ lookup('file', '/home/ubuntu/.aws/credentials') | regex_search('aws_access_key_id\s*=\s*(.*)', '\\1') }}"
+    aws_secret_access_key: "{{ lookup('file', '/home/ubuntu/.aws/credentials') | regex_search('aws_secret_access_key\s*=\s*(.*)', '\\1') }}"
+    aws_region: ap-south-1   # change to your region if needed
+
   tasks:
 
     - name: Delete old deployment
@@ -29,14 +34,36 @@
     - debug:
         var: awscreds.stdout_lines
 
+    - name: Delete old deployment
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+      command: kubectl delete -f /home/ubuntu/Deployment.yml
+      ignore_errors: yes
+
+    - name: Delete old service
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+      command: kubectl delete -f /home/ubuntu/Service.yml
+      ignore_errors: yes
+
     - name: Apply Kubernetes deployment from target node
       environment:
         KUBECONFIG: /home/ubuntu/.kube/config
-        AWS_SHARED_CREDENTIALS_FILE: /home/ubuntu/.aws/credentials
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
       command: kubectl apply -f /home/ubuntu/Deployment.yml
 
     - name: Apply Kubernetes service from target node
       environment:
         KUBECONFIG: /home/ubuntu/.kube/config
-        AWS_SHARED_CREDENTIALS_FILE: /home/ubuntu/.aws/credentials
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
       command: kubectl apply -f /home/ubuntu/Service.yml
