@@ -2,11 +2,25 @@
   become: true
   vars:
     aws_region: "ap-south-1"
-    aws_access_key_id: "{{ lookup('ini', 'default.aws_access_key_id file=/home/ubuntu/.aws/credentials') }}"
-    aws_secret_access_key: "{{ lookup('ini', 'default.aws_secret_access_key file=/home/ubuntu/.aws/credentials') }}"
-
   tasks:
-    - name: Delete old deployment
+    - name: Read AWS credentials file from remote host
+      slurp:
+        src: /home/ubuntu/.aws/credentials
+      register: aws_creds_raw
+
+    - name: Decode AWS credentials content
+      set_fact:
+        aws_creds_content: "{{ aws_creds_raw.content | b64decode }}"
+
+    - name: Parse AWS access key id
+      set_fact:
+        aws_access_key_id: "{{ aws_creds_content | regex_search('aws_access_key_id\\s*=\\s*(.*)', '\\1') }}"
+
+    - name: Parse AWS secret access key
+      set_fact:
+        aws_secret_access_key: "{{ aws_creds_content | regex_search('aws_secret_access_key\\s*=\\s*(.*)', '\\1') }}"
+
+    - name: Delete old deployment (ignore errors if not present)
       command: kubectl delete -f /home/ubuntu/Deployment.yml
       environment:
         KUBECONFIG: /home/ubuntu/.kube/config
@@ -15,7 +29,7 @@
         AWS_DEFAULT_REGION: "{{ aws_region }}"
       ignore_errors: yes
 
-    - name: Delete old service
+    - name: Delete old service (ignore errors if not present)
       command: kubectl delete -f /home/ubuntu/Service.yml
       environment:
         KUBECONFIG: /home/ubuntu/.kube/config
