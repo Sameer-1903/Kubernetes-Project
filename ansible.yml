@@ -2,7 +2,11 @@
   become: true
   tasks:
     - name: Apply Kubernetes deployment from target node
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
       command: kubectl apply -f /home/ubuntu/Deployment.yml
 
     - name: Apply Kubernetes service from target node
+      environment:
+        KUBECONFIG: /home/ubuntu/.kube/config
       command: kubectl apply -f /home/ubuntu/Service.yml
