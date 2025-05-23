@@ -2,28 +2,30 @@
   become: true
   vars:
     aws_region: "ap-south-1"
+    kubeconfig_path: "/home/ubuntu/.kube/config"
+
   tasks:
     - name: Read AWS credentials file from remote host
       slurp:
         src: /home/ubuntu/.aws/credentials
-      register: aws_creds_raw
+      register: aws_creds_file
 
     - name: Decode AWS credentials content
       set_fact:
-        aws_creds_content: "{{ aws_creds_raw.content | b64decode }}"
+        aws_creds_content: "{{ aws_creds_file.content | b64decode }}"
 
     - name: Parse AWS access key id
       set_fact:
-        aws_access_key_id: "{{ aws_creds_content | regex_search('aws_access_key_id\\s*=\\s*(.*)', '\\1') }}"
+        aws_access_key_id: "{{ (aws_creds_content | regex_search('aws_access_key_id\\s*=\\s*(.+)', '\\1')) | trim }}"
 
     - name: Parse AWS secret access key
       set_fact:
-        aws_secret_access_key: "{{ aws_creds_content | regex_search('aws_secret_access_key\\s*=\\s*(.*)', '\\1') }}"
+        aws_secret_access_key: "{{ (aws_creds_content | regex_search('aws_secret_access_key\\s*=\\s*(.+)', '\\1')) | trim }}"
 
     - name: Delete old deployment (ignore errors if not present)
       command: kubectl delete -f /home/ubuntu/Deployment.yml
       environment:
-        KUBECONFIG: /home/ubuntu/.kube/config
+        KUBECONFIG: "{{ kubeconfig_path }}"
         AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
         AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
         AWS_DEFAULT_REGION: "{{ aws_region }}"
@@ -32,24 +34,24 @@
     - name: Delete old service (ignore errors if not present)
       command: kubectl delete -f /home/ubuntu/Service.yml
       environment:
-        KUBECONFIG: /home/ubuntu/.kube/config
+        KUBECONFIG: "{{ kubeconfig_path }}"
         AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
         AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
         AWS_DEFAULT_REGION: "{{ aws_region }}"
       ignore_errors: yes
 
-    - name: Apply deployment
+    - name: Apply Kubernetes deployment from target node
       command: kubectl apply -f /home/ubuntu/Deployment.yml
       environment:
-        KUBECONFIG: /home/ubuntu/.kube/config
+        KUBECONFIG: "{{ kubeconfig_path }}"
         AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
         AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
         AWS_DEFAULT_REGION: "{{ aws_region }}"
 
-    - name: Apply service
+    - name: Apply Kubernetes service from target node
       command: kubectl apply -f /home/ubuntu/Service.yml
       environment:
-        KUBECONFIG: /home/ubuntu/.kube/config
+        KUBECONFIG: "{{ kubeconfig_path }}"
         AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
         AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
         AWS_DEFAULT_REGION: "{{ aws_region }}"
